@@ -1,0 +1,250 @@
+var Button = ReactBootstrap.Button;
+var Modal = ReactBootstrap.Modal;
+var FormControl = ReactBootstrap.FormControl;
+
+var key = localStorage._key?Number(localStorage._key): 0
+class RecipeBox extends React.Component {
+  constructor() {
+    super()
+    this.state = {
+      recipes: localStorage._my_recipes ? JSON.parse(localStorage._my_recipes) : [{
+        recipeName: "Spaghetti",
+        ingredients: ["Noodles", "Tomato Sauce", "(Optional) Meatballs"],
+        key: key++
+      }, {
+        recipeName: "Onion Pie",
+        ingredients: ["Onion", "Pie Crust", ""],
+        key: key++
+      }, {
+        recipeName: "Lasagna",
+        ingredients: ["Lasagna", "Salt", "Pepper", "Water"],
+        key: key++
+      }]
+    }
+  }
+  addRecipe(recipe) {
+    this.setState({
+      recipes: this.state.recipes.concat(recipe)
+    },function(){
+      if(typeof(Storage)!=="undefined")
+        localStorage._key= recipe.key+1
+    })
+  }
+  deleteRecipe(recipe) {
+    this.setState({
+      recipes: this.state.recipes.filter(
+        item => JSON.stringify(item) === JSON.stringify(recipe) ? false : true)
+    })
+  }
+  editRecipe(oldRecipe, newRecipe) {
+    this.setState({
+      recipes: this.state.recipes.map(
+        item => JSON.stringify(item) === JSON.stringify(oldRecipe) ? newRecipe : item)
+    })
+  }
+  render() {
+    if (typeof(Storage) !== "undefined")
+      localStorage._my_recipes = JSON.stringify(this.state.recipes)
+    else console.log("browser does not support local storage. Recipes wont be saved upon refresh!")
+    return (
+      <div id="recipe-box">
+        <AddRecipe addRecipe={this.addRecipe.bind(this)}/>
+        <h2 id="title">A Recipe Box</h2>
+        <RecipeList 
+          recipes={this.state.recipes}
+          editRecipe={this.editRecipe.bind(this)} 
+          deleteRecipe={this.deleteRecipe.bind(this)}/>
+      </div>
+    )
+  }
+}
+class AddRecipe extends React.Component {
+  constructor() {
+    super()
+    this.state = {
+      showModal: false
+    }
+    this.open = this.open.bind(this)
+    this.close = this.close.bind(this)
+  }
+  open() {
+    this.setState({
+      showModal: true
+    })
+  }
+  close() {
+    this.setState({
+      showModal: false
+    })
+  }
+  addRecipe(e) {
+    e.preventDefault()
+    if (ReactDOM.findDOMNode(this.refs.recipeName).value) {
+      this.props.addRecipe({
+        recipeName: ReactDOM.findDOMNode(this.refs.recipeName).value,
+        ingredients: ReactDOM.findDOMNode(this.refs.ingredients).value.split(/ *,|, *|,/),
+        key: key++
+      })
+      this.close()
+    } else alert("You need to enter a recipe name!")
+  }
+  render() {
+    return (
+      <div id="add-recipe">
+        <Button bsSize="large" bsStyle="success" onClick={this.open}>
+          <span className="fa fa-plus"/>
+        </Button>
+        
+        <Modal show={this.state.showModal} onHide={this.close}>
+          <form onSubmit={this.addRecipe.bind(this)}>
+            <Modal.Header closeButton>
+              <Modal.Title>Enter a Recipe</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              Recipe Name: <FormControl ref="recipeName"/><br/>
+              Ingredients: <FormControl ref="ingredients" placeholder="seperated by commas"/><br/>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button type="reset">Clear</Button>
+              <Button type="submit" bsStyle="primary">Confirm</Button>
+            </Modal.Footer>
+          </form>
+        </Modal>
+      </div>
+    )
+  }
+}
+class RecipeList extends React.Component {
+  render() {
+    return (
+      <div id="recipe-list">
+        {this.props.recipes.map(recipe=> {
+          return <Recipe 
+                   key={recipe.key} 
+                   recipe={recipe}
+                   deleteRecipe={this.props.deleteRecipe}
+                   editRecipe={this.props.editRecipe}/>
+        })}
+      </div>
+    )
+  }
+}
+class Recipe extends React.Component {
+  constructor() {
+    super()
+    this.state = {
+      showIngredients: false
+    }
+  }
+  showIngredients() {
+    let toggle = this.state.showIngredients ? false : true
+    this.setState({
+      showIngredients: toggle
+    }, function() {
+      this.state.showIngredients ? $("#" + this.props.recipe.key).slideDown() : $("#" + this.props.recipe.key).slideUp()
+    })
+  }
+  deleteRecipe() {
+    this.props.deleteRecipe(this.props.recipe)
+  }
+  render() {
+    return (
+      <div id="recipe">
+        <p className="recipe-header" onClick={this.showIngredients.bind(this)}>
+          <b>{this.props.recipe.recipeName.toUpperCase()}</b>
+          <span className="settings">
+            <EditRecipe recipe={this.props.recipe} editRecipe={this.props.editRecipe}/>
+            <span className="fa fa-times" onClick={this.deleteRecipe.bind(this)}/>
+          </span>
+        </p>
+        <div id={this.props.recipe.key} className="ingredients">
+          {this.props.recipe.ingredients.map(ingredient=>{
+            return <p>{ingredient}</p>
+          })}
+        </div>
+      </div>
+    )
+  }
+}
+class EditRecipe extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      showModal: false,
+      recipeName: this.props.recipe.recipeName,
+      ingredients: this.props.recipe.ingredients.join(", ")
+    }
+    this.open = this.open.bind(this)
+    this.close = this.close.bind(this)
+  }
+  open() {
+    this.setState({
+      showModal: true
+    })
+  }
+  close() {
+    this.setState({
+      showModal: false
+    })
+  }
+  reset(e){
+    e.preventDefault()
+    this.setState({
+      recipeName: this.props.recipe.recipeName,
+      ingredients: this.props.recipe.ingredients.join(", ")
+    })
+  }
+  updateRecipeName(e){
+    this.setState({
+      recipeName: e.target.value
+    })
+  }
+  updateIngredients(e){
+    this.setState({
+      ingredients: e.target.value
+    })
+  }
+  editRecipe(e) {
+    e.preventDefault()
+    if(this.state.recipeName){
+      this.props.editRecipe(this.props.recipe, {
+        recipeName: this.state.recipeName,
+        ingredients: this.state.ingredients.split(/ *,|, *|,/),
+        key: this.props.recipe.key
+      })
+      this.close()
+    }
+    else alert("You must enter a recipe name!")
+  }
+  render() {
+    return (
+      <div id="add-recipe">
+        <span className="fa fa-pencil" onClick={this.open}/>
+        
+        <Modal show={this.state.showModal} onHide={this.close}>
+          <form onSubmit={this.editRecipe.bind(this)}>
+            <Modal.Header closeButton>
+              <Modal.Title>Edit {this.props.recipe.recipeName}</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              Recipe Name: <FormControl
+                             ref="recipeName"
+                             value={this.state.recipeName} 
+                             onChange={this.updateRecipeName.bind(this)}/><br/>
+              Ingredients: <FormControl
+                             ref="ingredients"
+                             value={this.state.ingredients}
+                             onChange={this.updateIngredients.bind(this)}
+                             placeholder="seperated by commas"/><br/>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button type="reset" onClick={this.reset.bind(this)}>Reset</Button>
+              <Button type="submit" bsStyle="primary">Confirm</Button>
+            </Modal.Footer>
+          </form>
+        </Modal>
+      </div>
+    )
+  }
+}
+ReactDOM.render(<RecipeBox/>, document.getElementById('app'))

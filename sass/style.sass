@@ -1,0 +1,57 @@
+@import 'https://fonts.googleapis.com/css?family=Poiret+One'
+html, body
+  height: 100vh
+body
+  display: flex
+  align-items: center
+  justify-content: center
+#app
+  min-height: 450px
+  width: 90vw
+  background-color: #2ecc71
+  box-shadow: 0 0 5px black
+h2#title
+  font-family: 'Poiret One', cursive
+  font-weight: bold
+#recipe-box
+  padding: 5px
+#recipe-list
+  margin: 10px 0
+  #recipe
+    margin-bottom: 5px
+  .recipe-header
+    position: relative
+    background-color: #27ae60
+    color: #ecf0f1
+    padding: 10px
+    margin: 0
+  
+    transition: padding 0.5s
+    &:hover
+      color: #fff
+      padding-left: 20px
+      cursor: pointer
+    .settings
+      margin: 0 10px
+      font-size: 1.6em
+      
+      position: absolute
+      right: 0
+      top: 0
+      bottom: 0
+      display: flex
+      align-items: center
+      span
+        margin-right: 10px
+        padding: 5px 10px
+      .fa-pencil:hover
+        color: #2980b9
+      .fa-times:hover
+        color: #c0392b
+  .ingredients 
+    background-color: #ecf0f1
+    border-radius: 0 0px 10px 10px
+    padding: 5px 0 5px 20px
+    margin: 0
+    display: none
+    
